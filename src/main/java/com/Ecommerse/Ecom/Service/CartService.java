@@ -7,6 +7,7 @@ import com.Ecommerse.Ecom.Model.User;
 import com.Ecommerse.Ecom.Repository.CartItemRepository;
 import com.Ecommerse.Ecom.Repository.ProductRepository;
 import com.Ecommerse.Ecom.Repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +17,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class CartService {
     private final ProductRepository productRepository;
     private final UserRepository  userRepository;
@@ -41,7 +43,12 @@ public class CartService {
         if(exitingCartItem != null)
         {
             exitingCartItem.setQuantity(exitingCartItem.getQuantity() + request.getQuantity());
-//            exitingCartItem.setPrice(product.getPrice().multiply(BigDecimal.valueOf(exitingCartItem.getQuantity())));
+            exitingCartItem.setPrice(
+                    new BigDecimal(product.getPrice())
+                            .multiply(
+                                    BigDecimal.valueOf(exitingCartItem.getQuantity())
+                            )
+            );
             cartItemRepository.save(exitingCartItem);
         }
         else{
@@ -49,7 +56,12 @@ public class CartService {
             cartItem.setUser(user);
             cartItem.setProduct(product);
             cartItem.setQuantity(request.getQuantity());
-//            cartItem.setPrice(request.getQuantity().multiply(BigDecimal.valueOf(request.getQuantity()));
+            cartItem.setPrice(
+                    new BigDecimal(product.getPrice())
+                            .multiply(
+                                    BigDecimal.valueOf(request.getQuantity())
+                            )
+            );
             cartItemRepository.save(cartItem);
         }
         return true;
@@ -75,7 +87,10 @@ public class CartService {
         return cartItemRepository.findByUserId(userId);
     }
 
+    @Transactional
     public void clearCart(String userId) {
-        userRepository.findById(Long.valueOf(userId)).ifPresent(cartItemRepository::deleteByUser);
+
+        userRepository.findById(Long.valueOf(userId))
+                .ifPresent(cartItemRepository::deleteByUser);
     }
 }
